@@ -49,12 +49,13 @@ class App extends Component {
 
     // Declaring this for later so we can chain functions on SimpleStorage.
     var simpleStorageInstance
-
+    console.log('got em')
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
+      console.log('GOT ACCOUNTS!')
       simpleStorage.deployed().then((instance) => {
         simpleStorageInstance = instance
-
+        alert('DEPLOYED!')
         // Stores a given value, 5 by default.
         return simpleStorageInstance.set(5, {from: accounts[0]})
       }).then((result) => {
