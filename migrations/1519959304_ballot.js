@@ -1,7 +1,7 @@
-var Ballot = artifacts.require("./Ballot.sol");
+var Election = artifacts.require("./Election.sol");
 
 
 module.exports = function(deployer) {
   // Use deployer to state migration tasks.
-  deployer.deploy(Ballot, ["Test Ballot"], ["Facey McPresident"], ["Marcus Veepson"], ["Satoshi"], ["Vitalik"])
+  deployer.deploy(Election, [["Facey McPresident"], ["Marcus Veepson"], ["Satoshi"], ["Vitalik"]], [1,1,1,1])
 };

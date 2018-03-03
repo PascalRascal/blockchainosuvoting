@@ -1,12 +1,12 @@
 pragma solidity ^0.4.16;
 
 /// @title Voting with delegation.
-contract Ballot {
+contract Election {
     // Number of candidates per ballet
-    uint constant NUMBER_OF_CANDIDATES = 11;
+    uint constant NUMBER_OF_CANDIDATES = 1;
     // Number of total ballots
-    uint constant NUMBER_OF_BALLETS = 4;
-
+    uint constant NUMBER_OF_BALLOTS = 4;
+     
     // This declares a new complex type which will
     // be used for variables later.
     // It will represent a single voter.
@@ -15,6 +15,7 @@ contract Ballot {
         bool voted;  // if true, that person already voted
         address delegate; // person delegated to
         uint vote;   // index of the voted proposal
+        uint[NUMBER_OF_BALLOTS] votes; // The voter's submitted votes
     }
 
     // This is a type for a single proposal.
@@ -22,19 +23,18 @@ contract Ballot {
         bytes32 name;   // short name (up to 32 bytes)
         uint voteCount; // number of accumulated votes
     }
-    struct Election {
+    // Struct for a ballot, in which a proposal is voted on
+    struct Ballot {
         Proposal[NUMBER_OF_CANDIDATES] candidates;
-        uint winner;
-        uint endDate;
     }
 
     address public chairperson;
-
+    uint public startTime;
     // This declares a state variable that
     // stores a `Voter` struct for each possible address.
     mapping(address => Voter) public voters;
     // Array representing our current election
-    Election[NUMBER_OF_BALLETS] public ballots;
+    Ballot[NUMBER_OF_BALLOTS] ballots;
     
     // A dynamically-sized array of `Proposal` structs.
     Proposal[NUMBER_OF_CANDIDATES] public proposals;
@@ -46,57 +46,34 @@ contract Ballot {
 
     // TODO: Remove PROPOSALNAMES
     /// Create a new ballot to choose one of `proposalNames`.
-    function Ballot(bytes32[] proposalNames, bytes32[] presNames, bytes32[] vpNames, bytes32[] secNames, bytes32[] tresNames) public {
+    /// NOTE: Solidity is SHIT AND doesnt do nested arrays, so we have to be creative with our solution
+    /// Candidates is an array containg our candidate names eg ["Satoshi", "Vitalik"]
+    /// Candidates per ballot tells us which indices correspond the the ballot like, [1, 2] tells us the first 1 strings refer to a ballot, the next 2 refer to another ballot, and so on
+    function Election(bytes32[] candidates, uint[NUMBER_OF_BALLOTS] candidatesPerBallot) public {
         require(
-            presNames.length < NUMBER_OF_CANDIDATES &&
-            vpNames.length < NUMBER_OF_CANDIDATES &&
-            secNames.length < NUMBER_OF_CANDIDATES &&
-            tresNames.length < NUMBER_OF_CANDIDATES
+            candidates.length <= NUMBER_OF_BALLOTS 
         );
         chairperson = msg.sender;
         voters[chairperson].weight = 1;
-        uint i = 0;
+        startTime = block.timestamp;
+        uint j = 0;
+        // TEST THIS
+        for(uint i = 0; i < candidatesPerBallot.length; i++){
+            require(candidatesPerBallot[i] <= NUMBER_OF_CANDIDATES);
+            
+            for(j = j; j < candidatesPerBallot[i]; j++){
+                ballots[i].candidates[j] = Proposal({
+                    name: candidates[j],
+                    voteCount: 0
+                });
+            }
+        }
 
         // For each of the provided proposal names,
         // create a new proposal object and add it
         // to the end of the array.
-        for (i = 0; i < proposalNames.length; i++) {
-            // `Proposal({...})` creates a temporary
-            // Proposal object and `proposals.push(...)`
-            // appends it to the end of `proposals`.
-            proposals[i] = Proposal({
-                name: proposalNames[i],
-                voteCount: 0
-            });
-        }
-        // Fill our president proposal array
-        for (i = 0; i < presNames.length; i++) {
-            presProposals[i] = Proposal({
-                name: presNames[i],
-                voteCount: 0
-            });
-        }
-        // Fill our vp proposal array
-        for (i = 0; i < vpNames.length; i++) {
-            vpProposals[i] = Proposal({
-                name: vpNames[i],
-                voteCount: 0
-            });
-        }
-        // Fill our sec proposal array
-        for (i = 0; i < secNames.length; i++) {
-            secProposals[i] = Proposal({
-                name: secNames[i],
-                voteCount: 0
-            });
-        }
-        // Fill our tres proposal array
-        for (i = 0; i < tresNames.length; i++) {
-            tresProposals[i] = Proposal({
-                name: tresNames[i],
-                voteCount: 0
-            });
-        }
+
+        
     }
 
     // Give `voter` the right to vote on this ballot.
@@ -171,6 +148,24 @@ contract Ballot {
         proposals[proposal].voteCount += sender.weight;
     }
 
+    /// Cast your ballot for the election
+    /// IMPORTANT: The choice is the index+1 of the candidate they support (0 is a no vote)
+    function castVotes(uint[NUMBER_OF_BALLOTS] choices) public {
+        require(block.timestamp < startTime + 5 days);
+        Voter storage sender = voters[msg.sender];
+        require(!sender.voted);
+        sender.voted = true;
+        sender.votes = choices;
+        for(uint i = 0; i < NUMBER_OF_BALLOTS; i++){
+            uint choice = choices[i];
+            // TODO: Investigate early termination in solidity
+            if(choice <= ballots[i].candidates.length && choice > 0){
+                ballots[i].candidates[choice - 1].voteCount += sender.weight;
+            }
+        }
+        
+    }
+
     /// @dev Computes the winning proposal taking all
     /// previous votes into account.
     function winningProposal() public view
@@ -184,9 +179,7 @@ contract Ballot {
             }
         }
     }
-    function ballots() public view returns (Proposal[NUMBER_OF_CANDIDATES]){
-        return proposals;
-    }
+
     // Calls winningProposal() function to get the index
     // of the winner contained in the proposals array and then
     // returns the name of the winner

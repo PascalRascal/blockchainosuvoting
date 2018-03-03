@@ -1,9 +1,9 @@
-var Ballot = artifacts.require("./Ballot.sol");
+var Election = artifacts.require("./Election.sol");
 
 
-contract('Ballot', function(accounts) {
+contract('Election', function(accounts) {
   it("should assert true", function(done) {
-    var ballot = Ballot.deployed();
+    var election = Election.deployed();
     assert.isTrue(true);
     done();
   });
