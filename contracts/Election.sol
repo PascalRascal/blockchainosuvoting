@@ -3,7 +3,7 @@ pragma solidity ^0.4.16;
 /// @title Voting with delegation.
 contract Election {
     // Number of candidates per ballet
-    uint constant NUMBER_OF_CANDIDATES = 1;
+    uint constant NUMBER_OF_CANDIDATES = 2;
     // Number of total ballots
     uint constant NUMBER_OF_BALLOTS = 4;
      
@@ -38,11 +38,6 @@ contract Election {
     
     // A dynamically-sized array of `Proposal` structs.
     Proposal[NUMBER_OF_CANDIDATES] public proposals;
-
-    Proposal[NUMBER_OF_CANDIDATES] public presProposals;
-    Proposal[NUMBER_OF_CANDIDATES] public vpProposals;
-    Proposal[NUMBER_OF_CANDIDATES] public secProposals;
-    Proposal[NUMBER_OF_CANDIDATES] public tresProposals;
 
     // TODO: Remove PROPOSALNAMES
     /// Create a new ballot to choose one of `proposalNames`.
@@ -164,6 +159,19 @@ contract Election {
             }
         }
         
+    }
+
+    function votingWeightOf(address _voter) public constant returns (uint weight){
+        return voters[_voter].weight;
+    }
+
+    function didVote(address _voter) public constant returns (bool voted){
+        return voters[_voter].voted;
+    }
+
+    function getVotes(address _voter) public constant returns (uint[NUMBER_OF_BALLOTS] votes){
+        require(voters[_voter].voted);
+        return voters[_voter].votes;
     }
 
     /// @dev Computes the winning proposal taking all
