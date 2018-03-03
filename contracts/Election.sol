@@ -36,10 +36,7 @@ contract Election {
     // Array representing our current election
     Ballot[NUMBER_OF_BALLOTS] ballots;
     
-    // A dynamically-sized array of `Proposal` structs.
-    Proposal[NUMBER_OF_CANDIDATES] public proposals;
 
-    // TODO: Remove PROPOSALNAMES
     /// Create a new ballot to choose one of `proposalNames`.
     /// NOTE: Solidity is SHIT AND doesnt do nested arrays, so we have to be creative with our solution
     /// Candidates is an array containg our candidate names eg ["Satoshi", "Vitalik"]
@@ -63,17 +60,17 @@ contract Election {
                 });
             }
         }
-
-        // For each of the provided proposal names,
-        // create a new proposal object and add it
-        // to the end of the array.
-
         
+    }
+
+    modifier timeConstrained() {
+        require(block.timestamp < startTime + 5 days);
+        _;
     }
 
     // Give `voter` the right to vote on this ballot.
     // May only be called by `chairperson`.
-    function giveRightToVote(address voter) public {
+    function giveRightToVote(address voter) public timeConstrained {
         // If the argument of `require` evaluates to `false`,
         // it terminates and reverts all changes to
         // the state and to Ether balances. It is often
@@ -90,7 +87,7 @@ contract Election {
     }
 
     /// Delegate your vote to the voter `to`.
-    function delegate(address to) public {
+    function delegate(address to) public timeConstrained {
         // assigns reference
         Voter storage sender = voters[msg.sender];
         require(!sender.voted);
@@ -121,7 +118,13 @@ contract Election {
         if (delegate_.voted) {
             // If the delegate already voted,
             // directly add to the number of votes
-            proposals[delegate_.vote].voteCount += sender.weight;
+            for(uint i = 0; i < NUMBER_OF_BALLOTS; i++){
+                uint choice = delegate_.votes[i];
+                // Don't count empty votes
+                if(choice != 0){
+                    ballots[i].candidates[choice - 1].voteCount += sender.weight;
+                }
+            }
         } else {
             // If the delegate did not vote yet,
             // add to her weight.
@@ -129,24 +132,9 @@ contract Election {
         }
     }
 
-    /// Give your vote (including votes delegated to you)
-    /// to proposal `proposals[proposal].name`.
-    function vote(uint proposal) public {
-        Voter storage sender = voters[msg.sender];
-        require(!sender.voted);
-        sender.voted = true;
-        sender.vote = proposal;
-
-        // If `proposal` is out of the range of the array,
-        // this will throw automatically and revert all
-        // changes.
-        proposals[proposal].voteCount += sender.weight;
-    }
-
     /// Cast your ballot for the election
     /// IMPORTANT: The choice is the index+1 of the candidate they support (0 is a no vote)
-    function castVotes(uint[NUMBER_OF_BALLOTS] choices) public {
-        require(block.timestamp < startTime + 5 days);
+    function castVotes(uint[NUMBER_OF_BALLOTS] choices) public timeConstrained {
         Voter storage sender = voters[msg.sender];
         require(!sender.voted);
         sender.voted = true;
@@ -161,40 +149,17 @@ contract Election {
         
     }
 
-    function votingWeightOf(address _voter) public constant returns (uint weight){
-        return voters[_voter].weight;
+    function votingWeightOf(address _voter) public view returns (uint weight){
+        weight = voters[_voter].weight;
     }
 
-    function didVote(address _voter) public constant returns (bool voted){
-        return voters[_voter].voted;
+    function didVote(address _voter) public view returns (bool voted){
+        voted = voters[_voter].voted;
     }
 
-    function getVotes(address _voter) public constant returns (uint[NUMBER_OF_BALLOTS] votes){
+    function getVotes(address _voter) public view returns (uint[NUMBER_OF_BALLOTS] votes){
         require(voters[_voter].voted);
-        return voters[_voter].votes;
-    }
-
-    /// @dev Computes the winning proposal taking all
-    /// previous votes into account.
-    function winningProposal() public view
-            returns (uint winningProposal_)
-    {
-        uint winningVoteCount = 0;
-        for (uint p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[p].voteCount;
-                winningProposal_ = p;
-            }
-        }
-    }
-
-    // Calls winningProposal() function to get the index
-    // of the winner contained in the proposals array and then
-    // returns the name of the winner
-    function winnerName() public view
-            returns (bytes32 winnerName_)
-    {
-        winnerName_ = proposals[winningProposal()].name;
+        votes = voters[_voter].votes;
     }
 }
 

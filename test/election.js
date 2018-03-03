@@ -17,7 +17,7 @@ contract('Election', async (accounts) => {
     let choices = [1,1,1,1]
 
     // Grant a different account the right to vote
-    await election.giveRightToVote(accounts[1], {from: accounts[0]})\
+    await election.giveRightToVote(accounts[1], {from: accounts[0]})
 
     // Actually vote
     await election.castVotes(choices, {from: accounts[1]})
@@ -28,11 +28,15 @@ contract('Election', async (accounts) => {
       assert.equal(choices[i], v, "Contract failed to record the voter choosing candidate " + choices[i] + " instead choosing candidate " + v);
     })
     
+    
   })
   it("should allow for an empty ballot", async () => {
     let election = await Election.deployed();
     await election.castVotes([0,0,0,0], {from: accounts[0]})
     let didVote = await election.didVote(accounts[0])
-    assert.isTrue(didVote)
+    let votes = await election.getVotes(accounts[0])
+    votes.forEach((v) => assert.equal(0, v, "The chain did not record the empty ballot"))
+    assert.isTrue(didVote, "The chain did not record the user voting")
   })
 });
+
