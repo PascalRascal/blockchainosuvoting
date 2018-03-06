@@ -3,7 +3,7 @@ pragma solidity ^0.4.16;
 /// @title Voting with delegation.
 contract Election {
     // Number of candidates per ballet
-    uint8 constant NUMBER_OF_CANDIDATES = 2;
+    uint8 constant NUMBER_OF_CANDIDATES = 3;
     // Number of total ballots
     uint8 constant NUMBER_OF_BALLOTS = 4;
      
@@ -52,7 +52,6 @@ contract Election {
         uint8 candidateIndex = 0;
         // TEST THIS
         for (uint8 i = 0; i < NUMBER_OF_BALLOTS; i++) {
-            require(candidatesPerBallot[i] <= NUMBER_OF_CANDIDATES);
             ballots[i].numberOfCandidates = candidatesPerBallot[i];
             for (uint8 j = 0; j < candidatesPerBallot[i]; j++) {
                 
@@ -167,16 +166,20 @@ contract Election {
     }
 
     function getCandidates() public view returns (bytes32[NUMBER_OF_BALLOTS * NUMBER_OF_CANDIDATES] candidates) {
+        uint8 candidateIndex = 0;
         for (uint i = 0; i < NUMBER_OF_BALLOTS; i++) {
             for (uint j = 0; j < NUMBER_OF_CANDIDATES; j++) {
-                candidates[(i*NUMBER_OF_CANDIDATES) + j] = ballots[i].candidates[j].name;
+                candidates[candidateIndex] = ballots[i].candidates[j].name;
+                candidateIndex++;
             }
         }
     }
     function getStandings() public view returns (uint8[NUMBER_OF_BALLOTS * NUMBER_OF_CANDIDATES] standings) {
+        uint8 candidateIndex = 0;
         for (uint8 i = 0; i < NUMBER_OF_BALLOTS; i++) { 
             for (uint8 j = 0; j < NUMBER_OF_CANDIDATES; j++) {
-                standings[(i*NUMBER_OF_CANDIDATES) + j] = ballots[i].candidates[j].voteCount;
+                standings[candidateIndex] = ballots[i].candidates[j].voteCount;
+                candidateIndex++;
             }
         }
         return standings;
