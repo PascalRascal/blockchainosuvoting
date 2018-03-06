@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import ElectionContract from '../build/contracts/Election.json'
 import getWeb3 from './utils/getWeb3'
-
+import CandidateCard from './components/CandidateCard'
 import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
@@ -13,7 +13,12 @@ class App extends Component {
 
     this.state = {
       storageValue: 0,
-      web3: null
+      web3: null,
+      electionInstance: null,
+      candidateCounts: [],
+      candidateNames: [],
+      standings: [],
+      votingWeight: 0
     }
   }
 
@@ -55,33 +60,69 @@ class App extends Component {
       console.log('GOT ACCOUNTS!')
       election.deployed().then((instance) => {
         electionInstance = instance
-        alert('DEPLOYED!')
-        this.electionInstance = instance;
-        
-        // Stores a given value, 5 by default.
-        return electionInstance.votingWeightOf(accounts[0], {from: accounts[0]})
-      }).then((w) => {
-        console.log(w)
+        this.setState({
+          electionInstance: instance
+        })
+        electionInstance.votingWeightOf(accounts[0], {from: accounts[0]}).then((vw) => {
+          this.setState({votingWeight: vw.toNumber()})
+        })
+        electionInstance.getCandidates({from: accounts[0]}).then((candidates) => {
+          let stringCandidates = candidates.map((c) => this.state.web3.toAscii(c))
+          console.log(stringCandidates)
+          this.setState({
+            candidateNames: stringCandidates
+          })
+        })
+        electionInstance.getStandings({from: accounts[0]}).then((standings) => {
+          let numberStandings = standings.map((c) => c.toNumber())
+          console.log(numberStandings)
+          this.setState({
+            standings: numberStandings
+          })
+        })
+        electionInstance.getCandidateCounts({from: accounts[0]}).then((counts) => {
+          let numberCounts = counts.map((c) => c.toNumber())
+          console.log(numberCounts)
+          this.setState({
+            candidateCounts: numberCounts
+          })
+        })
+
       })
     })
   }
 
   render() {
+    let {votingWeight, candidateNames, standings, candidateCounts} = this.state;
+    let ballots = [];
+    let candidateIndex = 0;
+
+
+    if(candidateNames.length > 0 && standings.length > 0 && candidateCounts.length > 0){
+      candidateCounts.forEach((count) => {
+        let ballotCandidates = [];
+        for(var i = 0; i < count; i++){
+          ballotCandidates.push({name: candidateNames[candidateIndex], votes: standings[candidateIndex]})
+          candidateIndex++;
+        }
+        ballots.push(ballotCandidates)
+      })
+      console.log(ballots);
+    }
+
+
     return (
       <div className="App">
         <nav className="navbar pure-menu pure-menu-horizontal">
-            <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
+            <a href="#" className="pure-menu-heading pure-menu-link">{votingWeight}</a>
         </nav>
 
         <main className="container">
           <div className="pure-g">
             <div className="pure-u-1-1">
-              <h1>Good to Go!</h1>
-              <p>Your Truffle Box is installed and ready.</p>
-              <h2>Smart Contract Example</h2>
-              <p>If your contracts compiled and migrated successfully, below will show a stored value of 5 (by default).</p>
-              <p>Try changing the value stored on <strong>line 59</strong> of App.js.</p>
-              <p>The stored value is: {this.state.storageValue}</p>
+              <h1>President Candidates</h1>
+              <div> <CandidateCard/> </div>
+              <h1>Vice President Candidates</h1>
             </div>
           </div>
         </main>
