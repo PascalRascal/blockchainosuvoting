@@ -7,23 +7,28 @@ class CandidateRow extends Component {
             selectedCandidate: null
         }
     }
-
+    candidateSelected(candidate) {
+        console.log('CANDIDATE SELECTED!')
+        this.setState({selectedCandidate: candidate})
+        this.props.onCandidateSelected(candidate)
+    }
     render() {
         let {candidates} = this.props
-    }
-}
-
-class CandidateCard extends Component {
-    render () {
-        return (
-        <div className="pure-g">
-            <div className="pure-u-1-3"><p>Thirds</p></div>
-            <div className="pure-u-1-3"><p>Thirds</p></div>
-            <div className="pure-u-1-3"><button className="pure-button pure-button-primary">A Primary Button</button>
-        </div>
-        </div>
+        return(
+            <div style={{
+                display: "flex",
+                flexDirection: 'row'
+            }}>
+                {candidates ? candidates.map((candidate,i) => (
+                    <div style={{marginRight: "50px"}} key={i}>
+                        <h3> {candidate.name} </h3>
+                        <p> Votes: {candidate.votes + (i === (this.state.selectedCandidate - 1)) ? 1 : 0}  </p>
+                        <button onClick={() => this.candidateSelected(i+1)} className="pure-button pure-button-primary">Vote</button>
+                    </div>
+                )) : null}
+            </div>
         )
     }
 }
 
-export default CandidateCard
+export default CandidateRow

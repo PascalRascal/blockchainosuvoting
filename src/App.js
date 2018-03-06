@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import ElectionContract from '../build/contracts/Election.json'
 import getWeb3 from './utils/getWeb3'
-import CandidateCard from './components/CandidateCard'
+import CandidateRow from './components/CandidateCard'
 import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
@@ -14,11 +14,15 @@ class App extends Component {
     this.state = {
       storageValue: 0,
       web3: null,
+      account: null,
       electionInstance: null,
       candidateCounts: [],
       candidateNames: [],
       standings: [],
-      votingWeight: 0
+      readyToSubmit: false,
+      userBallot: [0,0,0,0],
+      votingWeight: 0,
+      voteSubmitted: false,
     }
   }
 
@@ -61,13 +65,14 @@ class App extends Component {
       election.deployed().then((instance) => {
         electionInstance = instance
         this.setState({
-          electionInstance: instance
+          electionInstance: instance,
+          account: accounts[0]
         })
         electionInstance.votingWeightOf(accounts[0], {from: accounts[0]}).then((vw) => {
           this.setState({votingWeight: vw.toNumber()})
         })
         electionInstance.getCandidates({from: accounts[0]}).then((candidates) => {
-          let stringCandidates = candidates.map((c) => this.state.web3.toAscii(c))
+          let stringCandidates = candidates.map((c) => this.state.web3.toAscii(c).replace(/\u0000/g, ''))
           console.log(stringCandidates)
           this.setState({
             candidateNames: stringCandidates
@@ -91,14 +96,33 @@ class App extends Component {
       })
     })
   }
+  submitVotes(){
+    this.state.electionInstance.castVotes(this.state.userBallot, {from: this.state.account}).then(() => {
+      this.setState({
+        voteSubmitted: true
+      })
+      alert('Congrats! You Voted!')
+    })
+  }
+  setUserBallotChoice(ballot) {
+    return (candidate) => {
+      
+      let {userBallot} = this.state;
+      userBallot[ballot] = candidate;
+      if(userBallot[0] && userBallot[1] && userBallot[2] && userBallot[3]){
+        this.setState({readyToSubmit: true})
+      }
+    }
+  }
 
   render() {
     let {votingWeight, candidateNames, standings, candidateCounts} = this.state;
-    let ballots = [];
     let candidateIndex = 0;
+    var ballots = null;
 
 
     if(candidateNames.length > 0 && standings.length > 0 && candidateCounts.length > 0){
+      ballots = [];
       candidateCounts.forEach((count) => {
         let ballotCandidates = [];
         for(var i = 0; i < count; i++){
@@ -107,7 +131,6 @@ class App extends Component {
         }
         ballots.push(ballotCandidates)
       })
-      console.log(ballots);
     }
 
 
@@ -119,12 +142,23 @@ class App extends Component {
 
         <main className="container">
           <div className="pure-g">
+          {ballots && !this.state.voteSubmitted ? 
             <div className="pure-u-1-1">
               <h1>President Candidates</h1>
-              <div> <CandidateCard/> </div>
+              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(0).bind(this)}candidates={ballots[0]}/>}</div>
               <h1>Vice President Candidates</h1>
+              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(1).bind(this)}candidates={ballots[1]}/>}</div>
+              <h1>Treasury Candidates</h1>
+              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(2).bind(this)}candidates={ballots[2]}/>}</div>
+              <h1>Secretary Candidates</h1>
+              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(3).bind(this)}candidates={ballots[3]}/>}</div>
             </div>
+          : <div/> 
+          }
           </div>
+          {this.state.readyToSubmit ? <div> 
+            <button onClick={() => this.submitVotes()} className="pure-button pure-button-primary">Submit Ballot</button>
+          </div> : <div/>}
         </main>
       </div>
     );
