@@ -1,4 +1,4 @@
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.2;
 
 /// @title Voting with delegation.
 contract Election {
