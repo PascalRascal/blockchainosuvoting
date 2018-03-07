@@ -168,7 +168,7 @@ contract Election {
     function getCandidates() public view returns (bytes32[NUMBER_OF_BALLOTS * NUMBER_OF_CANDIDATES] candidates) {
         uint8 candidateIndex = 0;
         for (uint i = 0; i < NUMBER_OF_BALLOTS; i++) {
-            for (uint j = 0; j < NUMBER_OF_CANDIDATES; j++) {
+            for (uint j = 0; j < ballots[i].numberOfCandidates; j++) {
                 candidates[candidateIndex] = ballots[i].candidates[j].name;
                 candidateIndex++;
             }
@@ -177,7 +177,7 @@ contract Election {
     function getStandings() public view returns (uint8[NUMBER_OF_BALLOTS * NUMBER_OF_CANDIDATES] standings) {
         uint8 candidateIndex = 0;
         for (uint8 i = 0; i < NUMBER_OF_BALLOTS; i++) { 
-            for (uint8 j = 0; j < NUMBER_OF_CANDIDATES; j++) {
+            for (uint8 j = 0; j < ballots[i].numberOfCandidates; j++) {
                 standings[candidateIndex] = ballots[i].candidates[j].voteCount;
                 candidateIndex++;
             }
