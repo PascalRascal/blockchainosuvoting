@@ -47,8 +47,8 @@ contract('Mock Election', async (accounts) => {
 
     assert.equal(chairPerson, accounts[0], "The Deployer Address is not the chairperson")
     
-    let c1 = [2,1,0,1]
-    let c2 = [2,1,0,1]
+    let c1 = [1,1,0,1]
+    let c2 = [1,1,0,1]
     let c3 = [1,1,0,1]
     let c4 = [1,1,0,1]
     let c5 = [1,1,0,1]
@@ -71,7 +71,7 @@ contract('Mock Election', async (accounts) => {
     let results = await election.getStandings();
     let candidates = await election.getCandidates();
     let strCandidates = candidates.map((c) => toAscii(c))
-
+    let intResults = results.map((r) => r.toNumber())
     let candidateCounts = await election.getCandidateCounts()
 
     

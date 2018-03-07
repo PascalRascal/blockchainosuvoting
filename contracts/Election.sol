@@ -144,7 +144,7 @@ contract Election {
         sender.votes = choices;
         for (uint8 i = 0; i < NUMBER_OF_BALLOTS; i++) {
             uint8 choice = choices[i];
-            // TODO: Investigate early termination in solidity
+            require(choice <= ballots[i].numberOfCandidates);
             if (choice > 0) {
                 ballots[i].candidates[choice - 1].voteCount += sender.weight;
             }

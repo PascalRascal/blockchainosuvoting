@@ -71,6 +71,10 @@ class App extends Component {
         electionInstance.votingWeightOf(accounts[0], {from: accounts[0]}).then((vw) => {
           this.setState({votingWeight: vw.toNumber()})
         })
+        electionInstance.didVote(accounts[0]).then((b) => {
+          console.log('Did you vote')
+          console.log(b)
+        })
         electionInstance.getCandidates({from: accounts[0]}).then((candidates) => {
           let stringCandidates = candidates.map((c) => this.state.web3.toAscii(c).replace(/\u0000/g, ''))
           console.log(stringCandidates)
@@ -80,7 +84,6 @@ class App extends Component {
         })
         electionInstance.getStandings({from: accounts[0]}).then((standings) => {
           let numberStandings = standings.map((c) => c.toNumber())
-          console.log(numberStandings)
           this.setState({
             standings: numberStandings
           })
@@ -97,7 +100,8 @@ class App extends Component {
     })
   }
   submitVotes(){
-    this.state.electionInstance.castVotes(this.state.userBallot, {from: this.state.account}).then(() => {
+    console.log(this.state.userBallot)
+    this.state.electionInstance.castVotes(this.state.userBallot, {from: this.state.account, gas:3000000}).then(() => {
       this.setState({
         voteSubmitted: true
       })
@@ -142,21 +146,21 @@ class App extends Component {
 
         <main className="container">
           <div className="pure-g">
-          {ballots && !this.state.voteSubmitted ? 
+          {ballots ? 
             <div className="pure-u-1-1">
               <h1>President Candidates</h1>
-              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(0).bind(this)}candidates={ballots[0]}/>}</div>
+              <div> <CandidateRow onCandidateSelected={this.setUserBallotChoice(0).bind(this)}candidates={ballots[0]}/> </div>
               <h1>Vice President Candidates</h1>
-              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(1).bind(this)}candidates={ballots[1]}/>}</div>
+              <div> <CandidateRow onCandidateSelected={this.setUserBallotChoice(1).bind(this)}candidates={ballots[1]}/> </div>
               <h1>Treasury Candidates</h1>
-              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(2).bind(this)}candidates={ballots[2]}/>}</div>
+              <div> <CandidateRow onCandidateSelected={this.setUserBallotChoice(2).bind(this)}candidates={ballots[2]}/></div>
               <h1>Secretary Candidates</h1>
-              <div> {<CandidateRow onCandidateSelected={this.setUserBallotChoice(3).bind(this)}candidates={ballots[3]}/>}</div>
+              <div> <CandidateRow onCandidateSelected={this.setUserBallotChoice(3).bind(this)}candidates={ballots[3]}/></div>
             </div>
           : <div/> 
           }
           </div>
-          {this.state.readyToSubmit ? <div> 
+          {this.state.readyToSubmit && !this.state.voteSubmitted ? <div> 
             <button onClick={() => this.submitVotes()} className="pure-button pure-button-primary">Submit Ballot</button>
           </div> : <div/>}
         </main>
