@@ -61,19 +61,20 @@ class App extends Component {
     console.log('got em')
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
-      console.log('GOT ACCOUNTS!')
       election.deployed().then((instance) => {
         electionInstance = instance
         this.setState({
           electionInstance: instance,
           account: accounts[0]
         })
+        // Set up the initial state of our app from the ethereum blockchain
         electionInstance.votingWeightOf(accounts[0], {from: accounts[0]}).then((vw) => {
           this.setState({votingWeight: vw.toNumber()})
         })
         electionInstance.didVote(accounts[0]).then((b) => {
-          console.log('Did you vote')
-          console.log(b)
+          this.setState({
+            voteSubmitted: b
+          })
         })
         electionInstance.getCandidates({from: accounts[0]}).then((candidates) => {
           let stringCandidates = candidates.map((c) => this.state.web3.toAscii(c).replace(/\u0000/g, ''))
