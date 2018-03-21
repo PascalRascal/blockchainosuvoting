@@ -58,7 +58,7 @@ class App extends Component {
 
     // Declaring this for later so we can chain functions on SimpleStorage.
     var electionInstance;
-    console.log('got em')
+    
     // Get accounts.
     this.state.web3.eth.getAccounts((error, accounts) => {
       election.deployed().then((instance) => {
@@ -101,7 +101,6 @@ class App extends Component {
     })
   }
   submitVotes(){
-    console.log(this.state.userBallot)
     this.state.electionInstance.castVotes(this.state.userBallot, {from: this.state.account, gas:3000000}).then(() => {
       this.setState({
         voteSubmitted: true
